@@ -43,6 +43,61 @@ const Instagram = ({ className }) => (
   </svg>
 );
 
+const PLATFORM_IMAGE_SIZES = [
+  {
+    id: 'facebook',
+    label: 'Facebook Feed',
+    size: '1080 x 1080 px',
+    ratio: '1:1',
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram Feed',
+    size: '1080 x 1350 px',
+    ratio: '4:5',
+  },
+  {
+    id: 'tiktok',
+    label: 'TikTok / Story / Reel',
+    size: '1080 x 1920 px',
+    ratio: '9:16',
+  },
+];
+
+const formatParagraphs = (text, sentencesPerParagraph = 2) => {
+  if (!text) return [];
+
+  const normalized = text.trim();
+  if (!normalized) return [];
+
+  const existingParagraphs = normalized
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (existingParagraphs.length > 1) {
+    return existingParagraphs;
+  }
+
+  const singleLineParagraphs = normalized
+    .split('\n')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (singleLineParagraphs.length > 1) {
+    return singleLineParagraphs;
+  }
+
+  const sentences = normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()) || [normalized];
+  const grouped = [];
+
+  for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+    grouped.push(sentences.slice(i, i + sentencesPerParagraph).join(' '));
+  }
+
+  return grouped;
+};
+
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
 
@@ -201,6 +256,9 @@ export default function App() {
       '',
       'PROMPT GAMBAR',
       results.image_prompt || '',
+      '',
+      'SAIZ GAMBAR CADANGAN',
+      ...PLATFORM_IMAGE_SIZES.map((item) => `${item.label}: ${item.size} (${item.ratio})`),
       '',
       'SKRIP VIDEO',
       videoScriptText,
@@ -403,6 +461,7 @@ export default function App() {
                       label: 'Facebook',
                       icon: <Facebook className="h-4 w-4 text-blue-600" />,
                       content: results.fb,
+                      paragraphStyle: true,
                     },
                     {
                       id: 'ig',
@@ -437,8 +496,18 @@ export default function App() {
                           )}
                         </button>
                       </div>
-                      <div className="flex-1 whitespace-pre-wrap p-5 text-sm leading-relaxed text-slate-700">
-                        {item.content}
+                      <div className="flex-1 p-5 text-sm leading-relaxed text-slate-700">
+                        {item.paragraphStyle ? (
+                          <div className="space-y-4">
+                            {formatParagraphs(item.content).map((paragraph, index) => (
+                              <p key={`${item.id}-${index}`} className="whitespace-pre-wrap">
+                                {paragraph}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap">{item.content}</div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -489,6 +558,20 @@ export default function App() {
                   </p>
                   <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 font-mono text-sm leading-relaxed text-green-400 shadow-inner">
                     {results.image_prompt}
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {PLATFORM_IMAGE_SIZES.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                      >
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">
+                          {item.label}
+                        </p>
+                        <p className="mt-2 text-base font-bold text-slate-900">{item.size}</p>
+                        <p className="text-sm font-medium text-slate-500">Nisbah {item.ratio}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
