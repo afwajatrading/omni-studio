@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Loader2, Copy, CheckCircle2, Video, Sparkles, Settings2, Image as ImageIcon, PenTool, Film, Download, AlertTriangle } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Video, Sparkles, Settings2, Image as ImageIcon, PenTool, Film, AlertTriangle } from 'lucide-react';
 
-// Custom Icon untuk Facebook & Instagram (Bypass isu missing export lucide-react)
+// Custom Icon untuk Facebook & Instagram
 const Facebook = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
 );
@@ -10,7 +10,6 @@ const Instagram = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line></svg>
 );
 
-// Fungsi retry untuk API (Exponential Backoff)
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
   for (let i = 0; i < retries; i++) {
@@ -18,7 +17,7 @@ const fetchWithRetry = async (url, options, retries = 5) => {
       const response = await fetch(url, options);
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          throw new Error(`Auth Error: ${response.status}`);
+          throw new Error(`Auth Error: 401. Google tolak API key.`);
         }
         throw new Error(`HTTP Error: ${response.status} - Gagal menyambung ke API.`);
       }
@@ -52,10 +51,21 @@ export default function App() {
     setResults(null);
     setActiveTab('copy'); 
 
+    // --- API KEY (VERCEL READY) ---
+    // PENTING UNTUK VERCEL/VS CODE: Buang komen (//) pada dua baris di bawah sebelum push ke GitHub
+    const rawKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    const apiKey = rawKey.replace(/[\s'"]/g, '');
+
+    // KOD PREVIEW SEMENTARA UNTUK CANVAS:
     const apiKey = "";
 
+    if (!apiKey) {
+      setError('Gagal: API Key kosong. Pastikan variable VITE_GEMINI_API_KEY telah diletak di Vercel.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 1. GENERATE COPYWRITING & VIDEO SCRIPT (GEMINI)
       const textUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
       const systemInstruction = `Anda adalah pakar media sosial, copywriter, dan pengarah video bertauliah dari Malaysia. Tugas anda adalah mengambil idea pengguna dan menghasilkan content marketing. Gunakan Bahasa Melayu untuk copywriting dan skrip.
@@ -110,7 +120,7 @@ export default function App() {
       
       let jsonResult;
       try {
-        jsonResult = JSON.parse(textOutput);
+        jsonResult = JSON.parse(textOutput.replace(/```json/g, '').replace(/```/g, '').trim());
       } catch (parseError) {
         throw new Error("Gagal parse JSON dari AI: " + textOutput.substring(0, 50) + "...");
       }
@@ -120,8 +130,8 @@ export default function App() {
 
     } catch (err) {
       console.error("Ralat Utama:", err);
-      if (err.message.includes('Auth Error') || err.message.includes('401')) {
-        setError('Ralat 401: Akses ditolak. Ini bermakna API Key anda kosong atau tidak sah. Sila semak fail .env atau tetapan API Key anda di Vercel.');
+      if (err.message.includes('Auth Error') || err.message.includes('401') || err.message.includes('400')) {
+        setError(`Ralat 401: Akses Ditolak. Vercel sedang membaca API Key yang bermula dengan "${apiKey.substring(0, 8)}...". Sila pastikan key ini aktif di Google AI Studio.`);
       } else {
         setError(err.message || 'Sistem mengalami gangguan yang tidak diketahui.');
       }
@@ -216,7 +226,7 @@ export default function App() {
             <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-bold flex items-start gap-3">
                <AlertTriangle className="w-5 h-5 shrink-0 text-red-500" />
                <div className="flex-1">
-                 <p className="mb-1">Gagal Generate Copywriting (API Error):</p>
+                 <p className="mb-1">Terdapat Ralat:</p>
                  <code className="text-xs bg-red-100 px-2 py-1 rounded block whitespace-pre-wrap">{error}</code>
                </div>
             </div>
