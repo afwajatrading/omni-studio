@@ -1,8 +1,12 @@
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
+const MODEL_ALIASES = {
+  'gemini-pro': 'gemini-2.5-flash',
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-pro': 'gemini-2.5-pro',
+};
 const ALLOWED_MODELS = new Set([
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-pro',
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
 ]);
 
 const SYSTEM_INSTRUCTION = `Anda adalah pakar pemasaran media sosial Malaysia. Hasilkan content marketing yang viral dalam Bahasa Melayu.
@@ -82,7 +86,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt diperlukan.' });
   }
 
-  const selectedModel = ALLOWED_MODELS.has(model) ? model : DEFAULT_MODEL;
+  const normalizedModel = MODEL_ALIASES[model] || model;
+  const selectedModel = ALLOWED_MODELS.has(normalizedModel) ? normalizedModel : DEFAULT_MODEL;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
 
   try {

@@ -83,7 +83,7 @@ const fetchWithRetry = async (url, options, retries = 5) => {
 export default function App() {
   const [prompt, setPrompt] = useState('');
   const [tone, setTone] = useState('Santai & Kasual');
-  const [model, setModel] = useState('gemini-1.5-flash');
+  const [model, setModel] = useState('gemini-2.5-flash');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
@@ -179,9 +179,8 @@ export default function App() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
               >
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Terpantas)</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Bijak)</option>
-                <option value="gemini-pro">Gemini Pro (Versi Lama)</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Disyorkan)</option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Lebih Kuat)</option>
               </select>
             </div>
 
