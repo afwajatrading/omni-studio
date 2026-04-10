@@ -57,8 +57,6 @@ export default function App() {
     const rawKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     const apiKey = rawKey.replace(/[\s'"]/g, '');
 
-    // KOD PREVIEW SEMENTARA UNTUK CANVAS:
-    const apiKey = "";
 
     if (!apiKey) {
       setError('Gagal: API Key kosong. Pastikan variable VITE_GEMINI_API_KEY telah diletak di Vercel.');
