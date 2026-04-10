@@ -52,7 +52,8 @@ export default function App() {
     setActiveTab('copy'); 
 
     // --- API KEY (VERCEL READY) ---
-    // PENTING UNTUK VERCEL/VS CODE: Buang komen (//) pada dua baris di bawah sebelum push ke GitHub
+    // PENTING UNTUK VERCEL/VS CODE: 
+    // Padam komen (//) pada DUA baris di bawah sebelum push ke GitHub!
     const rawKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     const apiKey = rawKey.replace(/[\s'"]/g, '');
 
