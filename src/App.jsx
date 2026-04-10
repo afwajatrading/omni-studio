@@ -143,6 +143,19 @@ export default function App() {
     document.body.removeChild(el);
   };
 
+  const copyVideoScript = () => {
+    if (!results?.video_script?.length) return;
+
+    const scriptText = results.video_script
+      .map(
+        (scene) =>
+          `Scene ${scene.scene}\nVisual: ${scene.visual}\nAudio: "${scene.audio_dialogue}"`
+      )
+      .join('\n\n');
+
+    copyToClipboard(scriptText, 'video-script');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 pb-20 font-sans text-slate-800 md:p-8">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -327,10 +340,23 @@ export default function App() {
 
             {activeTab === 'video' && (
               <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                  <Film className="h-5 w-5 text-indigo-600" />
-                  Skrip Video Pendek
-                </h3>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+                    <Film className="h-5 w-5 text-indigo-600" />
+                    Skrip Video Pendek
+                  </h3>
+                  <button
+                    onClick={copyVideoScript}
+                    className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white"
+                  >
+                    {copiedStates['video-script'] ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copiedStates['video-script'] ? 'Tersalin' : 'Copy Skrip'}
+                  </button>
+                </div>
                 {results.video_script.map((scene, index) => (
                   <div
                     key={index}
