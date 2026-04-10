@@ -305,7 +305,7 @@ export default function App() {
             Omni<span className="text-indigo-600">Studio</span>
           </h1>
           <p className="text-lg font-medium text-slate-500">
-            Ubah idea anda menjadi content profesional dalam saat.
+            One Stop Centre untuk Content Creator.
           </p>
         </div>
 
@@ -616,6 +616,10 @@ export default function App() {
             )}
           </div>
         )}
+
+        <div className="border-t border-slate-200 pt-4 text-center">
+          <p className="text-sm font-medium text-slate-400">Hak Milik SaaS</p>
+        </div>
       </div>
     </div>
   );
