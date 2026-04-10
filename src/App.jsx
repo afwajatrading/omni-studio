@@ -156,6 +156,19 @@ export default function App() {
     copyToClipboard(scriptText, 'video-script');
   };
 
+  const copyAllCopywriting = () => {
+    if (!results) return;
+
+    const sections = [
+      `Facebook\n${results.fb || ''}`,
+      `Instagram\n${results.ig || ''}`,
+      `TikTok\n${results.tiktok_copy || ''}`,
+      results.trending_hashtags ? `Hashtags\n${results.trending_hashtags}` : null,
+    ].filter(Boolean);
+
+    copyToClipboard(sections.join('\n\n'), 'copy-all');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 pb-20 font-sans text-slate-800 md:p-8">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -266,52 +279,97 @@ export default function App() {
             </div>
 
             {activeTab === 'copy' && (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                {[
-                  {
-                    id: 'fb',
-                    label: 'Facebook',
-                    icon: <Facebook className="h-4 w-4 text-blue-600" />,
-                    content: results.fb,
-                  },
-                  {
-                    id: 'ig',
-                    label: 'Instagram',
-                    icon: <Instagram className="h-4 w-4 text-pink-600" />,
-                    content: results.ig,
-                  },
-                  {
-                    id: 'tk',
-                    label: 'TikTok',
-                    icon: <Video className="h-4 w-4 text-black" />,
-                    content: results.tiktok_copy,
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Copywriting Siap Guna</h3>
+                    <p className="text-sm text-slate-500">Salin satu platform atau ambil semuanya sekali gus.</p>
+                  </div>
+                  <button
+                    onClick={copyAllCopywriting}
+                    className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white"
                   >
-                    <div className="flex items-center justify-between border-b bg-slate-50 p-4">
-                      <span className="flex items-center gap-2 font-bold text-slate-800">
-                        {item.icon}
-                        {item.label}
-                      </span>
+                    {copiedStates['copy-all'] ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copiedStates['copy-all'] ? 'Tersalin' : 'Copy Semua'}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  {[
+                    {
+                      id: 'fb',
+                      label: 'Facebook',
+                      icon: <Facebook className="h-4 w-4 text-blue-600" />,
+                      content: results.fb,
+                    },
+                    {
+                      id: 'ig',
+                      label: 'Instagram',
+                      icon: <Instagram className="h-4 w-4 text-pink-600" />,
+                      content: results.ig,
+                    },
+                    {
+                      id: 'tk',
+                      label: 'TikTok',
+                      icon: <Video className="h-4 w-4 text-black" />,
+                      content: results.tiktok_copy,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+                    >
+                      <div className="flex items-center justify-between border-b bg-slate-50 p-4">
+                        <span className="flex items-center gap-2 font-bold text-slate-800">
+                          {item.icon}
+                          {item.label}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(item.content, item.id)}
+                          className="text-xs font-black uppercase text-indigo-600 hover:text-indigo-800"
+                        >
+                          {copiedStates[item.id] ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          ) : (
+                            'Copy'
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex-1 whitespace-pre-wrap p-5 text-sm leading-relaxed text-slate-700">
+                        {item.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {results.trending_hashtags && (
+                  <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-5 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h4 className="text-base font-bold text-indigo-900">Hashtag Cadangan</h4>
+                        <p className="text-sm text-indigo-700">Hashtag ini boleh terus dipakai untuk caption atau posting.</p>
+                      </div>
                       <button
-                        onClick={() => copyToClipboard(item.content, item.id)}
-                        className="text-xs font-black uppercase text-indigo-600 hover:text-indigo-800"
+                        onClick={() => copyToClipboard(results.trending_hashtags, 'hashtags')}
+                        className="flex items-center gap-2 rounded-xl border border-indigo-200 bg-white px-4 py-2 text-sm font-bold text-indigo-700"
                       >
-                        {copiedStates[item.id] ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        {copiedStates.hashtags ? (
+                          <CheckCircle2 className="h-4 w-4" />
                         ) : (
-                          'Copy'
+                          <Copy className="h-4 w-4" />
                         )}
+                        {copiedStates.hashtags ? 'Tersalin' : 'Copy Hashtag'}
                       </button>
                     </div>
-                    <div className="flex-1 whitespace-pre-wrap p-5 text-sm leading-relaxed text-slate-700">
-                      {item.content}
-                    </div>
+                    <p className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-indigo-900">
+                      {results.trending_hashtags}
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
