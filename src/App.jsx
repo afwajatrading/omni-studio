@@ -169,6 +169,73 @@ export default function App() {
     copyToClipboard(sections.join('\n\n'), 'copy-all');
   };
 
+  const buildFullExportText = () => {
+    if (!results) return '';
+
+    const videoScriptText = results.video_script?.length
+      ? results.video_script
+          .map(
+            (scene) =>
+              `Scene ${scene.scene}\nVisual: ${scene.visual}\nAudio: "${scene.audio_dialogue}"`
+          )
+          .join('\n\n')
+      : '';
+
+    return [
+      'OMNI STUDIO CONTENT PACK',
+      `Idea: ${prompt}`,
+      `Nada: ${tone}`,
+      `Model: ${model}`,
+      '',
+      'FACEBOOK',
+      results.fb || '',
+      '',
+      'INSTAGRAM',
+      results.ig || '',
+      '',
+      'TIKTOK',
+      results.tiktok_copy || '',
+      '',
+      'HASHTAG',
+      results.trending_hashtags || '',
+      '',
+      'PROMPT GAMBAR',
+      results.image_prompt || '',
+      '',
+      'SKRIP VIDEO',
+      videoScriptText,
+    ].join('\n');
+  };
+
+  const copyFullPack = () => {
+    const exportText = buildFullExportText();
+    if (!exportText) return;
+
+    copyToClipboard(exportText, 'copy-pack');
+  };
+
+  const downloadFullPack = () => {
+    const exportText = buildFullExportText();
+    if (!exportText) return;
+
+    const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safePrompt = prompt.trim().toLowerCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
+
+    link.href = url;
+    link.download = `${safePrompt || 'omni-studio'}-content-pack.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setCopiedStates((prev) => ({ ...prev, 'download-pack': true }));
+    setTimeout(() => {
+      setCopiedStates((prev) => ({ ...prev, 'download-pack': false }));
+    }, 2000);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 pb-20 font-sans text-slate-800 md:p-8">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -257,6 +324,37 @@ export default function App() {
 
         {results && (
           <div className="animate-in slide-in-from-bottom-4 space-y-6 fade-in duration-500">
+            <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Content Pack Siap Hantar</h3>
+                <p className="text-sm text-slate-500">Salin semua hasil sekali gus atau muat turun dalam fail teks.</p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={copyFullPack}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white"
+                >
+                  {copiedStates['copy-pack'] ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copiedStates['copy-pack'] ? 'Tersalin' : 'Copy Content Pack'}
+                </button>
+                <button
+                  onClick={downloadFullPack}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700"
+                >
+                  {copiedStates['download-pack'] ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copiedStates['download-pack'] ? 'Fail Siap' : 'Download TXT'}
+                </button>
+              </div>
+            </div>
+
             <div className="mx-auto flex w-max gap-2 overflow-x-auto rounded-2xl bg-slate-200 p-1">
               {[
                 { id: 'copy', label: 'Copywriting', icon: <PenTool className="h-4 w-4" /> },
