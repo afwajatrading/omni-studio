@@ -116,6 +116,24 @@ const getVideoPromptData = (results) => {
   };
 };
 
+const buildVideoGeneratorPrompt = (videoPrompt, scene) => {
+  const sections = [
+    videoPrompt.conceptTitle ? `Concept: ${videoPrompt.conceptTitle}` : null,
+    videoPrompt.openingHook ? `Opening hook: ${videoPrompt.openingHook}` : null,
+    videoPrompt.overallStyle ? `Visual style: ${videoPrompt.overallStyle}` : null,
+    scene?.scene ? `Scene ${scene.scene}` : null,
+    scene?.prompt || scene?.visual ? `Main prompt: ${scene.prompt || scene.visual}` : null,
+    scene?.camera_movement ? `Camera movement: ${scene.camera_movement}` : null,
+    scene?.transition ? `Transition: ${scene.transition}` : null,
+    scene?.on_screen_text || scene?.audio_dialogue
+      ? `On-screen text: ${scene.on_screen_text || scene.audio_dialogue}`
+      : null,
+    'Format: vertical 9:16, cinematic lighting, high detail, premium commercial look.',
+  ];
+
+  return sections.filter(Boolean).join('\n');
+};
+
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
 
@@ -220,22 +238,9 @@ export default function App() {
     const videoPrompt = getVideoPromptData(results);
     if (!videoPrompt.scenes.length) return;
 
-    const promptText = [
-      videoPrompt.conceptTitle ? `Konsep: ${videoPrompt.conceptTitle}` : null,
-      videoPrompt.openingHook ? `Opening Hook: ${videoPrompt.openingHook}` : null,
-      videoPrompt.overallStyle ? `Gaya Visual: ${videoPrompt.overallStyle}` : null,
-      ...videoPrompt.scenes.map((scene) =>
-        [
-          `Scene ${scene.scene}`,
-          `Prompt: ${scene.prompt || scene.visual || ''}`,
-          `Camera: ${scene.camera_movement || '-'}`,
-          `Transition: ${scene.transition || '-'}`,
-          `On-screen Text: ${scene.on_screen_text || scene.audio_dialogue || '-'}`,
-        ].join('\n')
-      ),
-    ]
-      .filter(Boolean)
-      .join('\n\n');
+    const promptText = videoPrompt.scenes
+      .map((scene) => buildVideoGeneratorPrompt(videoPrompt, scene))
+      .join('\n\n--------------------\n\n');
 
     copyToClipboard(promptText, 'video-prompt');
   };
@@ -258,22 +263,9 @@ export default function App() {
 
     const videoPrompt = getVideoPromptData(results);
     const videoPromptText = videoPrompt.scenes.length
-      ? [
-          videoPrompt.conceptTitle ? `Konsep: ${videoPrompt.conceptTitle}` : null,
-          videoPrompt.openingHook ? `Opening Hook: ${videoPrompt.openingHook}` : null,
-          videoPrompt.overallStyle ? `Gaya Visual: ${videoPrompt.overallStyle}` : null,
-          ...videoPrompt.scenes.map((scene) =>
-            [
-              `Scene ${scene.scene}`,
-              `Prompt: ${scene.prompt || scene.visual || ''}`,
-              `Camera: ${scene.camera_movement || '-'}`,
-              `Transition: ${scene.transition || '-'}`,
-              `On-screen Text: ${scene.on_screen_text || scene.audio_dialogue || '-'}`,
-            ].join('\n')
-          ),
-        ]
-          .filter(Boolean)
-          .join('\n\n')
+      ? videoPrompt.scenes
+          .map((scene) => buildVideoGeneratorPrompt(videoPrompt, scene))
+          .join('\n\n--------------------\n\n')
       : '';
 
     return [
@@ -639,56 +631,40 @@ export default function App() {
                 {(() => {
                   const videoPrompt = getVideoPromptData(results);
 
-                  return (
-                    <>
-                      {(videoPrompt.conceptTitle || videoPrompt.openingHook || videoPrompt.overallStyle) && (
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Konsep</p>
-                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.conceptTitle || '-'}</p>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Opening Hook</p>
-                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.openingHook || '-'}</p>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Gaya Visual</p>
-                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.overallStyle || '-'}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {videoPrompt.scenes.map((scene, index) => (
-                        <div
-                          key={index}
-                          className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  return videoPrompt.scenes.map((scene, index) => (
+                    <div
+                      key={index}
+                      className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
+                          Scene {scene.scene}
+                        </p>
+                        <button
+                          onClick={() =>
+                            copyToClipboard(
+                              buildVideoGeneratorPrompt(videoPrompt, scene),
+                              `video-scene-${index}`
+                            )
+                          }
+                          className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black uppercase text-slate-700"
                         >
-                          <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
-                            Scene {scene.scene}
-                          </p>
-                          <p className="text-base font-bold leading-relaxed text-slate-900">
-                            {scene.prompt || scene.visual}
-                          </p>
-                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                            <div className="rounded-xl bg-white p-4">
-                              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Camera Movement</p>
-                              <p className="mt-2 text-sm font-medium text-slate-700">{scene.camera_movement || '-'}</p>
-                            </div>
-                            <div className="rounded-xl bg-white p-4">
-                              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Transition</p>
-                              <p className="mt-2 text-sm font-medium text-slate-700">{scene.transition || '-'}</p>
-                            </div>
-                          </div>
-                          <div className="rounded-xl bg-white p-4">
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">On-screen Text</p>
-                            <p className="mt-2 text-sm font-bold text-slate-900">
-                              {scene.on_screen_text || scene.audio_dialogue || '-'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  );
+                          {copiedStates[`video-scene-${index}`] ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                          {copiedStates[`video-scene-${index}`] ? 'Tersalin' : 'Copy Scene'}
+                        </button>
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">
+                        Siap salin terus ke video generator.
+                      </p>
+                      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 font-mono text-sm leading-relaxed text-green-400 shadow-inner whitespace-pre-wrap">
+                        {buildVideoGeneratorPrompt(videoPrompt, scene)}
+                      </div>
+                    </div>
+                  ));
                 })()}
               </div>
             )}
