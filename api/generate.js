@@ -14,7 +14,11 @@ Output MESTI dalam format JSON sahaja:
 1. fb: Copywriting panjang (storytelling).
 2. ig: Copywriting visual, aesthetic & kreatif.
 3. tiktok_copy: Caption pendek, padu & catchy.
-4. video_script: Skrip video 3-5 scene (Visual & Audio).
+4. video_prompt: Prompt video yang sinematik dan menarik untuk Reels/TikTok/AI video generator. Mesti ada:
+   - concept_title: tajuk konsep video
+   - opening_hook: hook pembukaan yang kuat
+   - overall_style: gaya visual keseluruhan
+   - scenes: 3-5 scene, setiap scene mesti ada scene, prompt, camera_movement, transition, on_screen_text
 5. image_prompt: Prompt bahasa Inggeris yang detail untuk AI Image Generator.
 6. trending_hashtags: 5 hashtag trending di Malaysia.`;
 
@@ -49,21 +53,31 @@ const buildPayload = (prompt, tone) => ({
         fb: { type: 'STRING' },
         ig: { type: 'STRING' },
         tiktok_copy: { type: 'STRING' },
-        video_script: {
-          type: 'ARRAY',
-          items: {
-            type: 'OBJECT',
-            properties: {
-              scene: { type: 'STRING' },
-              visual: { type: 'STRING' },
-              audio_dialogue: { type: 'STRING' },
+        video_prompt: {
+          type: 'OBJECT',
+          properties: {
+            concept_title: { type: 'STRING' },
+            opening_hook: { type: 'STRING' },
+            overall_style: { type: 'STRING' },
+            scenes: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  scene: { type: 'STRING' },
+                  prompt: { type: 'STRING' },
+                  camera_movement: { type: 'STRING' },
+                  transition: { type: 'STRING' },
+                  on_screen_text: { type: 'STRING' },
+                },
+              },
             },
           },
         },
         image_prompt: { type: 'STRING' },
         trending_hashtags: { type: 'STRING' },
       },
-      required: ['fb', 'ig', 'tiktok_copy', 'video_script', 'image_prompt', 'trending_hashtags'],
+      required: ['fb', 'ig', 'tiktok_copy', 'video_prompt', 'image_prompt', 'trending_hashtags'],
     },
   },
 });

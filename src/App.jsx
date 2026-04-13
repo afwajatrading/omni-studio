@@ -98,6 +98,24 @@ const formatParagraphs = (text, sentencesPerParagraph = 2) => {
   return grouped;
 };
 
+const getVideoPromptData = (results) => {
+  if (results?.video_prompt) {
+    return {
+      conceptTitle: results.video_prompt.concept_title || '',
+      openingHook: results.video_prompt.opening_hook || '',
+      overallStyle: results.video_prompt.overall_style || '',
+      scenes: results.video_prompt.scenes || [],
+    };
+  }
+
+  return {
+    conceptTitle: '',
+    openingHook: '',
+    overallStyle: '',
+    scenes: results?.video_script || [],
+  };
+};
+
 const fetchWithRetry = async (url, options, retries = 5) => {
   const delays = [1000, 2000, 4000, 8000, 16000];
 
@@ -198,17 +216,28 @@ export default function App() {
     document.body.removeChild(el);
   };
 
-  const copyVideoScript = () => {
-    if (!results?.video_script?.length) return;
+  const copyVideoPrompt = () => {
+    const videoPrompt = getVideoPromptData(results);
+    if (!videoPrompt.scenes.length) return;
 
-    const scriptText = results.video_script
-      .map(
-        (scene) =>
-          `Scene ${scene.scene}\nVisual: ${scene.visual}\nAudio: "${scene.audio_dialogue}"`
-      )
+    const promptText = [
+      videoPrompt.conceptTitle ? `Konsep: ${videoPrompt.conceptTitle}` : null,
+      videoPrompt.openingHook ? `Opening Hook: ${videoPrompt.openingHook}` : null,
+      videoPrompt.overallStyle ? `Gaya Visual: ${videoPrompt.overallStyle}` : null,
+      ...videoPrompt.scenes.map((scene) =>
+        [
+          `Scene ${scene.scene}`,
+          `Prompt: ${scene.prompt || scene.visual || ''}`,
+          `Camera: ${scene.camera_movement || '-'}`,
+          `Transition: ${scene.transition || '-'}`,
+          `On-screen Text: ${scene.on_screen_text || scene.audio_dialogue || '-'}`,
+        ].join('\n')
+      ),
+    ]
+      .filter(Boolean)
       .join('\n\n');
 
-    copyToClipboard(scriptText, 'video-script');
+    copyToClipboard(promptText, 'video-prompt');
   };
 
   const copyAllCopywriting = () => {
@@ -227,12 +256,23 @@ export default function App() {
   const buildFullExportText = () => {
     if (!results) return '';
 
-    const videoScriptText = results.video_script?.length
-      ? results.video_script
-          .map(
-            (scene) =>
-              `Scene ${scene.scene}\nVisual: ${scene.visual}\nAudio: "${scene.audio_dialogue}"`
-          )
+    const videoPrompt = getVideoPromptData(results);
+    const videoPromptText = videoPrompt.scenes.length
+      ? [
+          videoPrompt.conceptTitle ? `Konsep: ${videoPrompt.conceptTitle}` : null,
+          videoPrompt.openingHook ? `Opening Hook: ${videoPrompt.openingHook}` : null,
+          videoPrompt.overallStyle ? `Gaya Visual: ${videoPrompt.overallStyle}` : null,
+          ...videoPrompt.scenes.map((scene) =>
+            [
+              `Scene ${scene.scene}`,
+              `Prompt: ${scene.prompt || scene.visual || ''}`,
+              `Camera: ${scene.camera_movement || '-'}`,
+              `Transition: ${scene.transition || '-'}`,
+              `On-screen Text: ${scene.on_screen_text || scene.audio_dialogue || '-'}`,
+            ].join('\n')
+          ),
+        ]
+          .filter(Boolean)
           .join('\n\n')
       : '';
 
@@ -260,8 +300,8 @@ export default function App() {
       'SAIZ GAMBAR CADANGAN',
       ...PLATFORM_IMAGE_SIZES.map((item) => `${item.label}: ${item.size} (${item.ratio})`),
       '',
-      'SKRIP VIDEO',
-      videoScriptText,
+      'PROMPT VIDEO',
+      videoPromptText,
     ].join('\n');
   };
 
@@ -417,7 +457,7 @@ export default function App() {
               {[
                 { id: 'copy', label: 'Copywriting', icon: <PenTool className="h-4 w-4" /> },
                 { id: 'image', label: 'Prompt Gambar', icon: <ImageIcon className="h-4 w-4" /> },
-                { id: 'video', label: 'Skrip Video', icon: <Film className="h-4 w-4" /> },
+                { id: 'video', label: 'Prompt Video', icon: <Film className="h-4 w-4" /> },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -582,36 +622,74 @@ export default function App() {
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800">
                     <Film className="h-5 w-5 text-indigo-600" />
-                    Skrip Video Pendek
+                    Prompt Video Sinematik
                   </h3>
                   <button
-                    onClick={copyVideoScript}
+                    onClick={copyVideoPrompt}
                     className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white"
                   >
-                    {copiedStates['video-script'] ? (
+                    {copiedStates['video-prompt'] ? (
                       <CheckCircle2 className="h-4 w-4" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
-                    {copiedStates['video-script'] ? 'Tersalin' : 'Copy Skrip'}
+                    {copiedStates['video-prompt'] ? 'Tersalin' : 'Copy Prompt'}
                   </button>
                 </div>
-                {results.video_script.map((scene, index) => (
-                  <div
-                    key={index}
-                    className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-5"
-                  >
-                    <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
-                      Scene {scene.scene}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      <b>Visual:</b> {scene.visual}
-                    </p>
-                    <p className="text-base font-bold text-slate-900">
-                      <b>Audio:</b> "{scene.audio_dialogue}"
-                    </p>
-                  </div>
-                ))}
+                {(() => {
+                  const videoPrompt = getVideoPromptData(results);
+
+                  return (
+                    <>
+                      {(videoPrompt.conceptTitle || videoPrompt.openingHook || videoPrompt.overallStyle) && (
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Konsep</p>
+                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.conceptTitle || '-'}</p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Opening Hook</p>
+                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.openingHook || '-'}</p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Gaya Visual</p>
+                            <p className="mt-2 text-sm font-bold text-slate-900">{videoPrompt.overallStyle || '-'}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {videoPrompt.scenes.map((scene, index) => (
+                        <div
+                          key={index}
+                          className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                        >
+                          <p className="text-xs font-black uppercase tracking-widest text-indigo-600">
+                            Scene {scene.scene}
+                          </p>
+                          <p className="text-base font-bold leading-relaxed text-slate-900">
+                            {scene.prompt || scene.visual}
+                          </p>
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <div className="rounded-xl bg-white p-4">
+                              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Camera Movement</p>
+                              <p className="mt-2 text-sm font-medium text-slate-700">{scene.camera_movement || '-'}</p>
+                            </div>
+                            <div className="rounded-xl bg-white p-4">
+                              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Transition</p>
+                              <p className="mt-2 text-sm font-medium text-slate-700">{scene.transition || '-'}</p>
+                            </div>
+                          </div>
+                          <div className="rounded-xl bg-white p-4">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">On-screen Text</p>
+                            <p className="mt-2 text-sm font-bold text-slate-900">
+                              {scene.on_screen_text || scene.audio_dialogue || '-'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
